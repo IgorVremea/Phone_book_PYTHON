@@ -28,7 +28,6 @@ def window_menu(m_list):
 
 def window_show_pbook(list):
     db_in_str = db_to_str(list)
-    print(db_in_str)
     textbox('Contacts:\n\nName Surname\t\t\tPhone number\t\tEmail', 'Contacts', db_in_str)
 
 def window_import():
@@ -55,25 +54,34 @@ def window_search():
     search = enterbox('Введите имя, фамилию, номер или почту контакта, полную информацию которого хотите найти:', 'SEARCH' )
     curs.execute(f"SELECT * FROM phone_book WHERE name = '{search}' OR surname = '{search}' OR main_ph_num = '{search}' OR email = '{search}' ORDER BY name,surname")
     list = curs.fetchall()
-    print(list)
     if list != None:
         window_show_pbook(list)
     else:
         msgbox('Такой информации нет в вашей контактной книге', 'EROR')
 
 def window_change():
-    temp_id = choose_contact()
-    changed_contact = multenterbox('Введите данные контакта:', 'CONTACT CHANGE', ['Имя','Фамилия', 'Номер телефона', 'почта'], [db_in_list[temp_id][1], db_in_list[temp_id][2], db_in_list[temp_id][3], db_in_list[temp_id][4]])
-    print(db_in_list[temp_id][0], ' ', changed_contact)
-    curs.execute(f"UPDATE phone_book SET name = '{changed_contact[0]}', surname = '{changed_contact[1]}', main_ph_num = '{changed_contact[2]}', email = '{changed_contact[3]}' WHERE id = {db_in_list[temp_id][0]}")
-    conn.commit()
-
-
-def choose_contact():
     db_in_list = db_to_list()
     temp_list = [f"{i+1}. {db_in_list[i][1]} {db_in_list[i][2]}               {db_in_list[i][3]}               {db_in_list[i][4]}" for i in range(len(db_in_list))]
     choice = choicebox('Выберите контакт, данные которого хотите изменить:', 'CHANGE', temp_list )
-    return = int(choice.split('.')[0])-1
+    if choice != '' and choice != None:
+        temp_id = int(choice.split('.')[0])-1
+        changed_contact = multenterbox('Введите данные контакта:', 'CONTACT CHANGE', ['Имя','Фамилия', 'Номер телефона', 'почта'], [db_in_list[temp_id][1], db_in_list[temp_id][2], db_in_list[temp_id][3], db_in_list[temp_id][4]])
+        curs.execute(f"UPDATE phone_book SET name = '{changed_contact[0]}', surname = '{changed_contact[1]}', main_ph_num = '{changed_contact[2]}', email = '{changed_contact[3]}' WHERE id = {db_in_list[temp_id][0]}")
+        conn.commit()
+
+def window_delete():
+    db_in_list = db_to_list()
+    temp_list = [f"{i+1}. {db_in_list[i][1]} {db_in_list[i][2]}               {db_in_list[i][3]}               {db_in_list[i][4]}" for i in range(len(db_in_list))]
+    choice = choicebox('Выберите контакт, данные которого хотите изменить:', 'CHANGE', temp_list )
+    if choice != '' and choice != None:
+        temp_id = int(choice.split('.')[0])-1
+        curs.execute(f"DELETE FROM phone_book WHERE id = {db_in_list[temp_id][0]}")
+        conn.commit()
+
+def window_add():
+    new_contact = multenterbox('Введите данные контакта:', 'CONTACT CHANGE', ['Имя','Фамилия', 'Номер телефона', 'почта'])
+    curs.execute(f"INSERT INTO phone_book (name, surname, main_ph_num, email) VALUES ('{new_contact[0]}', '{new_contact[1]}', '{new_contact[2]}', '{new_contact[3]}')")
+    conn.commit()
 
 def db_to_list():
     curs.execute("SELECT * FROM phone_book ORDER BY name,surname")
@@ -85,7 +93,7 @@ def db_to_str(list):
     id = 0
     for line in list:
         id += 1
-        if line[4] == None:
+        if line[4] == None or line[4] == '':
             email = "------"
         else:
             email = line[4]
@@ -97,9 +105,9 @@ def db_to_str(list):
 db_path = 'ph_book.db'
 conn = sl.connect(db_path)
 curs = conn.cursor()
-db_in_list = ''
+db_in_list = []
 
-menu_list = ['Exit', 'Show phone book', 'Import phone book', 'Search contact', 'Change contact']
+menu_list = ['Show phone book', 'Add new contact', 'Search contact', 'Change contact', 'Delete contact', 'Import phone book', 'Exit']
 
 ##############################################################################################
 ######################################## MAIN PROGRAM ########################################
@@ -122,10 +130,14 @@ while 1:
         case 'Show phone book': 
             db_in_list = db_to_list()
             window_show_pbook(db_in_list)
+        case 'Add new contact':
+            window_add()
         case 'Import phone book':
             window_import()
         case 'Search contact':
             window_search()
         case 'Change contact':
             window_change()
+        case 'Delete contact':
+            window_delete()
 
