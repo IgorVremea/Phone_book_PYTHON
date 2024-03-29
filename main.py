@@ -53,14 +53,27 @@ def window_import():
         elif import_path != None:
             msgbox("AHTUNG!\nВыберите файл с расширением .db", "WARNING")
 
+def window_search():
+    search = enterbox('Введите имя, фамилию, номер или почту контакта, полную информацию которого хотите найти:', 'SEARCH' )
+    curs.execute(f"SELECT * FROM phone_book WHERE name = '{search}' OR surname = '{search}' OR main_ph_num = '{search}' OR email = '{search}'")
+    list = curs.fetchall()
+    print(list)
+    if list != None:
+        list_in_str = db_to_str(list)
+        textbox('Contacts:\n\nName Surname\t\t\tPhone number\t\tEmail', 'Contacts', list_in_str)
+    else:
+        msgbox('Такой информации нет в вашей контактной книге', 'EROR')
+
 def db_to_str(list):
     str = ""
+    id = 0
     for line in list:
+        id += 1
         if line[4] == None:
             email = "------"
         else:
             email = line[4]
-        str += f"{line[0]}. {line[1]} {line[2]}\t\t\t{line[3]}\t\t{email}\n"
+        str += f"{id}. {line[1]} {line[2]}\t\t\t{line[3]}\t\t{email}\n"
     return str
 ################################################################################################
 ######################################## INITIALIZATION ########################################
@@ -69,7 +82,7 @@ db_path = 'ph_book.db'
 conn = sl.connect(db_path)
 curs = conn.cursor()
 
-menu_list = ['Exit', 'Show phone book', 'Import phone book']
+menu_list = ['Exit', 'Show phone book', 'Import phone book', 'Search contact']
 
 ##############################################################################################
 ######################################## MAIN PROGRAM ########################################
@@ -94,4 +107,6 @@ while 1:
             window_show_pbook()
         case 'Import phone book':
             window_import()
+        case 'Search contact':
+            window_search()
 
