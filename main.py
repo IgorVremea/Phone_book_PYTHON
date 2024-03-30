@@ -55,7 +55,7 @@ def window_import():
 
 def window_export():
     while 1:
-        save_file_path = filesavebox('Выберите куда хотите экспортировать книгу:', 'SAVE')
+        save_file_path = filesavebox('Выберите куда хотите экспортировать книгу:', 'SAVE', default = db_path, filetypes = [".db"])
         print(save_file_path)
         if save_file_path == None:
             break
