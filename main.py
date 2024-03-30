@@ -31,22 +31,25 @@ def window_show_pbook(list):
     textbox('Contacts:\n\nName Surname\t\t\tPhone number\t\tEmail', 'Contacts', db_in_str)
 
 def window_import():
+    msgbox('ВНИМАНИЕ!\nКонтакты добавляются даже, если есть уже в вашей записной книге (дубликаты)', 'IMPORTANT')
     while 1:
         import_path = fileopenbox('Choose a file ', 'Import', filetypes=["*.db"])
         if import_path == None:
             break
         elif import_path[-3:] == ".db":
-            if import_path[-len(db_path):] == db_path:
-                msgbox('Эта база данных уже используется\n(Поробуйте переименовать файл)', 'WARNING')
-            else:
-                with open(db_path, 'w') as db, open(import_path, 'r') as import_file:
-                    for line in import_file:
-                        db.write(line)
-                conn = sl.connect(db_path)
-                curs = conn.cursor()
-                db_init()
-                msgbox("База данных была импортирована успешно!", "SUCCESS!")
-                break
+            try:
+                conn_import = sl.connect(import_path)
+                curs_import = conn_import.cursor()
+                curs_import.execute('SELECT * FROM phone_book')
+            except sl.OperationalError:
+                msgbox('Нужная таблица контактов не найдена.\nВыберите другую базу данных.', 'EROR')
+                continue
+            conn_import.commit()
+            import_list = curs_import.fetchall()
+            for i in import_list:
+                curs.execute(f"INSERT INTO phone_book (name, surname, main_ph_num, email) VALUES ('{i[1]}', '{i[2]}', '{i[3]}', '{i[4]}')")
+            msgbox("База данных была импортирована успешно!", "SUCCESS!")
+            break
         elif import_path != None:
             msgbox("AHTUNG!\nВыберите файл с расширением .db", "WARNING")
 
